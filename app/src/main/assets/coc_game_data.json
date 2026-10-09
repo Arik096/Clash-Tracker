@@ -1,0 +1,404 @@
+{
+  "version": "2026.1",
+  "gameVersion": "Clash of Clans TH16/17 Update",
+  "buildings": [
+    {
+      "id": "town_hall",
+      "name": "Town Hall",
+      "category": "TOWN_HALL",
+      "resourceType": "GOLD",
+      "maxLevel": 17,
+      "description": "The heart of your village. Upgrading unlocks new defenses, buildings, troops, and levels.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 0, "timeSeconds": 0, "hitpoints": 1500},
+        {"level": 2, "thRequired": 1, "cost": 1000, "timeSeconds": 10, "hitpoints": 1600},
+        {"level": 3, "thRequired": 2, "cost": 4000, "timeSeconds": 180, "hitpoints": 1850},
+        {"level": 4, "thRequired": 3, "cost": 25000, "timeSeconds": 10800, "hitpoints": 2100},
+        {"level": 5, "thRequired": 4, "cost": 150000, "timeSeconds": 43200, "hitpoints": 2400},
+        {"level": 6, "thRequired": 5, "cost": 750000, "timeSeconds": 86400, "hitpoints": 2800},
+        {"level": 7, "thRequired": 6, "cost": 1200000, "timeSeconds": 172800, "hitpoints": 3300},
+        {"level": 8, "thRequired": 7, "cost": 2000000, "timeSeconds": 259200, "hitpoints": 3900},
+        {"level": 9, "thRequired": 8, "cost": 3000000, "timeSeconds": 345600, "hitpoints": 4600},
+        {"level": 10, "thRequired": 9, "cost": 4000000, "timeSeconds": 432000, "hitpoints": 5500},
+        {"level": 11, "thRequired": 10, "cost": 5000000, "timeSeconds": 518400, "hitpoints": 6800},
+        {"level": 12, "thRequired": 11, "cost": 6500000, "timeSeconds": 604800, "hitpoints": 7500},
+        {"level": 13, "thRequired": 12, "cost": 9000000, "timeSeconds": 777600, "hitpoints": 8200},
+        {"level": 14, "thRequired": 13, "cost": 12000000, "timeSeconds": 950400, "hitpoints": 8900},
+        {"level": 15, "thRequired": 14, "cost": 15000000, "timeSeconds": 1123200, "hitpoints": 9600},
+        {"level": 16, "thRequired": 15, "cost": 18000000, "timeSeconds": 1209600, "hitpoints": 10000},
+        {"level": 17, "thRequired": 16, "cost": 20000000, "timeSeconds": 1296000, "hitpoints": 10500}
+      ]
+    },
+    {
+      "id": "eagle_artillery",
+      "name": "Eagle Artillery",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 7,
+      "description": "Devastating long-range defense that activates after enough troops are deployed.",
+      "levels": [
+        {"level": 1, "thRequired": 11, "cost": 6000000, "timeSeconds": 604800, "hitpoints": 4000, "dps": 300},
+        {"level": 2, "thRequired": 11, "cost": 7500000, "timeSeconds": 691200, "hitpoints": 4400, "dps": 350},
+        {"level": 3, "thRequired": 12, "cost": 9500000, "timeSeconds": 864000, "hitpoints": 4800, "dps": 400},
+        {"level": 4, "thRequired": 13, "cost": 13000000, "timeSeconds": 1036800, "hitpoints": 5200, "dps": 450},
+        {"level": 5, "thRequired": 14, "cost": 17000000, "timeSeconds": 1209600, "hitpoints": 5600, "dps": 500},
+        {"level": 6, "thRequired": 15, "cost": 20500000, "timeSeconds": 1296000, "hitpoints": 5900, "dps": 525},
+        {"level": 7, "thRequired": 16, "cost": 22000000, "timeSeconds": 1382400, "hitpoints": 6200, "dps": 550}
+      ]
+    },
+    {
+      "id": "monolith",
+      "name": "Monolith",
+      "category": "DEFENSE",
+      "resourceType": "DARK_ELIXIR",
+      "maxLevel": 4,
+      "description": "A terrifying monolith fueled by Dark Elixir that deals damage proportional to target max health.",
+      "levels": [
+        {"level": 1, "thRequired": 15, "cost": 300000, "timeSeconds": 1209600, "hitpoints": 4748, "dps": 150},
+        {"level": 2, "thRequired": 15, "cost": 340000, "timeSeconds": 1296000, "hitpoints": 5051, "dps": 200},
+        {"level": 3, "thRequired": 16, "cost": 380000, "timeSeconds": 1382400, "hitpoints": 5350, "dps": 225},
+        {"level": 4, "thRequired": 17, "cost": 410000, "timeSeconds": 1468800, "hitpoints": 5600, "dps": 250}
+      ]
+    },
+    {
+      "id": "scattershot",
+      "name": "Scattershot",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 5,
+      "description": "Flings heavy bundles of rocks that shatter on impact, spraying debris behind the target.",
+      "levels": [
+        {"level": 1, "thRequired": 13, "cost": 12000000, "timeSeconds": 864000, "hitpoints": 3600, "dps": 125},
+        {"level": 2, "thRequired": 13, "cost": 14000000, "timeSeconds": 950400, "hitpoints": 4200, "dps": 150},
+        {"level": 3, "thRequired": 14, "cost": 17000000, "timeSeconds": 1123200, "hitpoints": 4800, "dps": 175},
+        {"level": 4, "thRequired": 15, "cost": 19500000, "timeSeconds": 1209600, "hitpoints": 5100, "dps": 190},
+        {"level": 5, "thRequired": 16, "cost": 21500000, "timeSeconds": 1296000, "hitpoints": 5400, "dps": 205}
+      ]
+    },
+    {
+      "id": "inferno_tower",
+      "name": "Inferno Tower",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 10,
+      "description": "Sets targets ablaze with solar heat. Can be configured for single-target or multi-target roast.",
+      "levels": [
+        {"level": 1, "thRequired": 10, "cost": 3500000, "timeSeconds": 432000, "hitpoints": 1500, "dps": 40},
+        {"level": 2, "thRequired": 10, "cost": 4500000, "timeSeconds": 518400, "hitpoints": 1800, "dps": 48},
+        {"level": 3, "thRequired": 10, "cost": 5500000, "timeSeconds": 604800, "hitpoints": 2100, "dps": 57},
+        {"level": 4, "thRequired": 11, "cost": 7000000, "timeSeconds": 691200, "hitpoints": 2400, "dps": 68},
+        {"level": 5, "thRequired": 11, "cost": 8500000, "timeSeconds": 777600, "hitpoints": 2700, "dps": 78},
+        {"level": 6, "thRequired": 12, "cost": 10500000, "timeSeconds": 864000, "hitpoints": 3100, "dps": 89},
+        {"level": 7, "thRequired": 13, "cost": 13500000, "timeSeconds": 1036800, "hitpoints": 3700, "dps": 102},
+        {"level": 8, "thRequired": 14, "cost": 16500000, "timeSeconds": 1123200, "hitpoints": 4000, "dps": 116},
+        {"level": 9, "thRequired": 15, "cost": 19000000, "timeSeconds": 1209600, "hitpoints": 4300, "dps": 126},
+        {"level": 10, "thRequired": 16, "cost": 21000000, "timeSeconds": 1296000, "hitpoints": 4600, "dps": 135}
+      ]
+    },
+    {
+      "id": "x_bow",
+      "name": "X-Bow",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 12,
+      "description": "Rapid-fire mechanical bow shooting bolts with pinpoint accuracy. Can target ground or ground & air.",
+      "levels": [
+        {"level": 1, "thRequired": 9, "cost": 2000000, "timeSeconds": 259200, "hitpoints": 1500, "dps": 60},
+        {"level": 2, "thRequired": 9, "cost": 2500000, "timeSeconds": 345600, "hitpoints": 1900, "dps": 75},
+        {"level": 3, "thRequired": 9, "cost": 3000000, "timeSeconds": 432000, "hitpoints": 2300, "dps": 90},
+        {"level": 4, "thRequired": 10, "cost": 4200000, "timeSeconds": 518400, "hitpoints": 2800, "dps": 110},
+        {"level": 5, "thRequired": 11, "cost": 5500000, "timeSeconds": 604800, "hitpoints": 3400, "dps": 135},
+        {"level": 6, "thRequired": 12, "cost": 7500000, "timeSeconds": 691200, "hitpoints": 3900, "dps": 160},
+        {"level": 7, "thRequired": 13, "cost": 9500000, "timeSeconds": 864000, "hitpoints": 4400, "dps": 185},
+        {"level": 8, "thRequired": 13, "cost": 11500000, "timeSeconds": 950400, "hitpoints": 4700, "dps": 200},
+        {"level": 9, "thRequired": 14, "cost": 14500000, "timeSeconds": 1036800, "hitpoints": 5000, "dps": 215},
+        {"level": 10, "thRequired": 15, "cost": 17500000, "timeSeconds": 1123200, "hitpoints": 5250, "dps": 230},
+        {"level": 11, "thRequired": 16, "cost": 19500000, "timeSeconds": 1209600, "hitpoints": 5500, "dps": 245},
+        {"level": 12, "thRequired": 17, "cost": 21000000, "timeSeconds": 1296000, "hitpoints": 5750, "dps": 260}
+      ]
+    },
+    {
+      "id": "air_defense",
+      "name": "Air Defense",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 14,
+      "description": "Anti-air rocket launcher that wrecks flying units but cannot fire on ground enemies.",
+      "levels": [
+        {"level": 1, "thRequired": 4, "cost": 22000, "timeSeconds": 14400, "hitpoints": 800, "dps": 80},
+        {"level": 5, "thRequired": 7, "cost": 650000, "timeSeconds": 172800, "hitpoints": 1000, "dps": 190},
+        {"level": 8, "thRequired": 10, "cost": 2600000, "timeSeconds": 432000, "hitpoints": 1300, "dps": 310},
+        {"level": 10, "thRequired": 12, "cost": 6000000, "timeSeconds": 691200, "hitpoints": 1500, "dps": 400},
+        {"level": 12, "thRequired": 14, "cost": 12500000, "timeSeconds": 950400, "hitpoints": 1700, "dps": 480},
+        {"level": 13, "thRequired": 15, "cost": 16500000, "timeSeconds": 1123200, "hitpoints": 1800, "dps": 520},
+        {"level": 14, "thRequired": 16, "cost": 18500000, "timeSeconds": 1209600, "hitpoints": 1900, "dps": 560}
+      ]
+    },
+    {
+      "id": "wizard_tower",
+      "name": "Wizard Tower",
+      "category": "DEFENSE",
+      "resourceType": "GOLD",
+      "maxLevel": 16,
+      "description": "Area splash magical defense that blasts clustered troops on ground and air.",
+      "levels": [
+        {"level": 1, "thRequired": 5, "cost": 180000, "timeSeconds": 21600, "hitpoints": 620, "dps": 11},
+        {"level": 6, "thRequired": 8, "cost": 1200000, "timeSeconds": 259200, "hitpoints": 1200, "dps": 40},
+        {"level": 10, "thRequired": 11, "cost": 5000000, "timeSeconds": 604800, "hitpoints": 1900, "dps": 70},
+        {"level": 13, "thRequired": 13, "cost": 10500000, "timeSeconds": 864000, "hitpoints": 2400, "dps": 90},
+        {"level": 14, "thRequired": 14, "cost": 14000000, "timeSeconds": 1036800, "hitpoints": 2600, "dps": 98},
+        {"level": 15, "thRequired": 15, "cost": 17000000, "timeSeconds": 1123200, "hitpoints": 2800, "dps": 106},
+        {"level": 16, "thRequired": 16, "cost": 19000000, "timeSeconds": 1209600, "hitpoints": 3000, "dps": 115}
+      ]
+    },
+    {
+      "id": "clan_castle",
+      "name": "Clan Castle",
+      "category": "ARMY",
+      "resourceType": "ELIXIR",
+      "maxLevel": 12,
+      "description": "Houses reinforcements donated by your clan mates, siege machines, and treasury loot.",
+      "levels": [
+        {"level": 1, "thRequired": 3, "cost": 10000, "timeSeconds": 0, "hitpoints": 1000},
+        {"level": 5, "thRequired": 9, "cost": 2000000, "timeSeconds": 259200, "hitpoints": 2600},
+        {"level": 7, "thRequired": 11, "cost": 5500000, "timeSeconds": 604800, "hitpoints": 3700},
+        {"level": 8, "thRequired": 12, "cost": 7500000, "timeSeconds": 691200, "hitpoints": 4200},
+        {"level": 9, "thRequired": 13, "cost": 10500000, "timeSeconds": 864000, "hitpoints": 4800},
+        {"level": 10, "thRequired": 14, "cost": 14000000, "timeSeconds": 1036800, "hitpoints": 5200},
+        {"level": 11, "thRequired": 15, "cost": 17500000, "timeSeconds": 1123200, "hitpoints": 5600},
+        {"level": 12, "thRequired": 16, "cost": 19500000, "timeSeconds": 1209600, "hitpoints": 6000}
+      ]
+    },
+    {
+      "id": "army_camp",
+      "name": "Army Camp",
+      "category": "ARMY",
+      "resourceType": "ELIXIR",
+      "maxLevel": 13,
+      "description": "Troops station here ready for battle. Upgrading increases your total attack capacity.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 250, "timeSeconds": 10, "hitpoints": 250},
+        {"level": 6, "thRequired": 6, "cost": 250000, "timeSeconds": 86400, "hitpoints": 500},
+        {"level": 8, "thRequired": 9, "cost": 1500000, "timeSeconds": 259200, "hitpoints": 800},
+        {"level": 10, "thRequired": 12, "cost": 5000000, "timeSeconds": 604800, "hitpoints": 1400},
+        {"level": 11, "thRequired": 13, "cost": 8500000, "timeSeconds": 777600, "hitpoints": 1700},
+        {"level": 12, "thRequired": 14, "cost": 13000000, "timeSeconds": 950400, "hitpoints": 2000},
+        {"level": 13, "thRequired": 16, "cost": 18000000, "timeSeconds": 1123200, "hitpoints": 2300}
+      ]
+    },
+    {
+      "id": "laboratory",
+      "name": "Laboratory",
+      "category": "ARMY",
+      "resourceType": "ELIXIR",
+      "maxLevel": 14,
+      "description": "Alchemical research center to upgrade troops, spells, and siege engines.",
+      "levels": [
+        {"level": 1, "thRequired": 3, "cost": 25000, "timeSeconds": 1800, "hitpoints": 500},
+        {"level": 7, "thRequired": 9, "cost": 1500000, "timeSeconds": 259200, "hitpoints": 1050},
+        {"level": 9, "thRequired": 11, "cost": 4500000, "timeSeconds": 518400, "hitpoints": 1600},
+        {"level": 11, "thRequired": 13, "cost": 9000000, "timeSeconds": 777600, "hitpoints": 2100},
+        {"level": 12, "thRequired": 14, "cost": 12500000, "timeSeconds": 950400, "hitpoints": 2300},
+        {"level": 13, "thRequired": 15, "cost": 15500000, "timeSeconds": 1036800, "hitpoints": 2500},
+        {"level": 14, "thRequired": 16, "cost": 18000000, "timeSeconds": 1123200, "hitpoints": 2700}
+      ]
+    },
+    {
+      "id": "pet_house",
+      "name": "Pet House",
+      "category": "ARMY",
+      "resourceType": "ELIXIR",
+      "maxLevel": 9,
+      "description": "Where heroic companions rest, feed, and upgrade to aid heroes in battle.",
+      "levels": [
+        {"level": 1, "thRequired": 14, "cost": 12000000, "timeSeconds": 864000, "hitpoints": 1800},
+        {"level": 2, "thRequired": 14, "cost": 14000000, "timeSeconds": 950400, "hitpoints": 2000},
+        {"level": 4, "thRequired": 14, "cost": 17000000, "timeSeconds": 1123200, "hitpoints": 2400},
+        {"level": 6, "thRequired": 15, "cost": 18500000, "timeSeconds": 1209600, "hitpoints": 2700},
+        {"level": 8, "thRequired": 15, "cost": 19500000, "timeSeconds": 1296000, "hitpoints": 3000},
+        {"level": 9, "thRequired": 16, "cost": 21000000, "timeSeconds": 1382400, "hitpoints": 3200}
+      ]
+    },
+    {
+      "id": "blacksmith",
+      "name": "Blacksmith",
+      "category": "ARMY",
+      "resourceType": "ELIXIR",
+      "maxLevel": 9,
+      "description": "Forges and equips Hero Equipment using Shiny, Glowy, and Starry Ores.",
+      "levels": [
+        {"level": 1, "thRequired": 8, "cost": 750000, "timeSeconds": 86400, "hitpoints": 1200},
+        {"level": 3, "thRequired": 10, "cost": 2500000, "timeSeconds": 345600, "hitpoints": 1500},
+        {"level": 5, "thRequired": 12, "cost": 6500000, "timeSeconds": 691200, "hitpoints": 1900},
+        {"level": 7, "thRequired": 14, "cost": 13000000, "timeSeconds": 950400, "hitpoints": 2300},
+        {"level": 8, "thRequired": 15, "cost": 16000000, "timeSeconds": 1036800, "hitpoints": 2500},
+        {"level": 9, "thRequired": 16, "cost": 18500000, "timeSeconds": 1123200, "hitpoints": 2700}
+      ]
+    },
+    {
+      "id": "barbarian_king",
+      "name": "Barbarian King Altar",
+      "category": "HERO",
+      "resourceType": "DARK_ELIXIR",
+      "maxLevel": 95,
+      "description": "The indomitable warlord of the village with ferocious attack and iron punch.",
+      "levels": [
+        {"level": 1, "thRequired": 7, "cost": 10000, "timeSeconds": 0, "hitpoints": 1700, "dps": 120},
+        {"level": 20, "thRequired": 9, "cost": 30000, "timeSeconds": 172800, "hitpoints": 3200, "dps": 220},
+        {"level": 40, "thRequired": 10, "cost": 650000, "timeSeconds": 345600, "hitpoints": 4600, "dps": 330},
+        {"level": 65, "thRequired": 12, "cost": 140000, "timeSeconds": 518400, "hitpoints": 6800, "dps": 480},
+        {"level": 80, "thRequired": 14, "cost": 220000, "timeSeconds": 691200, "hitpoints": 8800, "dps": 600},
+        {"level": 90, "thRequired": 15, "cost": 310000, "timeSeconds": 691200, "hitpoints": 10200, "dps": 680},
+        {"level": 95, "thRequired": 16, "cost": 350000, "timeSeconds": 691200, "hitpoints": 11000, "dps": 720}
+      ]
+    },
+    {
+      "id": "archer_queen",
+      "name": "Archer Queen Altar",
+      "category": "HERO",
+      "resourceType": "DARK_ELIXIR",
+      "maxLevel": 95,
+      "description": "Master archer with long range, cloaking stealth, and lethal precision shots.",
+      "levels": [
+        {"level": 1, "thRequired": 9, "cost": 20000, "timeSeconds": 0, "hitpoints": 725, "dps": 160},
+        {"level": 30, "thRequired": 9, "cost": 45000, "timeSeconds": 172800, "hitpoints": 1600, "dps": 380},
+        {"level": 50, "thRequired": 11, "cost": 95000, "timeSeconds": 432000, "hitpoints": 2400, "dps": 540},
+        {"level": 75, "thRequired": 13, "cost": 190000, "timeSeconds": 604800, "hitpoints": 3300, "dps": 720},
+        {"level": 85, "thRequired": 14, "cost": 260000, "timeSeconds": 691200, "hitpoints": 3800, "dps": 820},
+        {"level": 90, "thRequired": 15, "cost": 320000, "timeSeconds": 691200, "hitpoints": 4100, "dps": 880},
+        {"level": 95, "thRequired": 16, "cost": 360000, "timeSeconds": 691200, "hitpoints": 4400, "dps": 940}
+      ]
+    },
+    {
+      "id": "grand_warden",
+      "name": "Grand Warden Altar",
+      "category": "HERO",
+      "resourceType": "ELIXIR",
+      "maxLevel": 70,
+      "description": "Scholarly battlefield commander boosting ally HP with Life Aura and invulnerability.",
+      "levels": [
+        {"level": 1, "thRequired": 11, "cost": 2500000, "timeSeconds": 0, "hitpoints": 1000, "dps": 50},
+        {"level": 20, "thRequired": 11, "cost": 5000000, "timeSeconds": 345600, "hitpoints": 1500, "dps": 110},
+        {"level": 40, "thRequired": 12, "cost": 9500000, "timeSeconds": 518400, "hitpoints": 2000, "dps": 200},
+        {"level": 55, "thRequired": 14, "cost": 15000000, "timeSeconds": 691200, "hitpoints": 2500, "dps": 270},
+        {"level": 65, "thRequired": 15, "cost": 19500000, "timeSeconds": 691200, "hitpoints": 2900, "dps": 320},
+        {"level": 70, "thRequired": 16, "cost": 21500000, "timeSeconds": 691200, "hitpoints": 3150, "dps": 350}
+      ]
+    },
+    {
+      "id": "royal_champion",
+      "name": "Royal Champion Altar",
+      "category": "HERO",
+      "resourceType": "DARK_ELIXIR",
+      "maxLevel": 45,
+      "description": "Fierce spear-wielder who targets enemy defenses directly and throws a bouncing shield.",
+      "levels": [
+        {"level": 1, "thRequired": 13, "cost": 80000, "timeSeconds": 0, "hitpoints": 2400, "dps": 350},
+        {"level": 15, "thRequired": 13, "cost": 140000, "timeSeconds": 432000, "hitpoints": 3000, "dps": 460},
+        {"level": 25, "thRequired": 13, "cost": 210000, "timeSeconds": 604800, "hitpoints": 3500, "dps": 540},
+        {"level": 35, "thRequired": 14, "cost": 280000, "timeSeconds": 691200, "hitpoints": 4000, "dps": 620},
+        {"level": 40, "thRequired": 15, "cost": 330000, "timeSeconds": 691200, "hitpoints": 4300, "dps": 670},
+        {"level": 45, "thRequired": 16, "cost": 370000, "timeSeconds": 691200, "hitpoints": 4600, "dps": 720}
+      ]
+    },
+    {
+      "id": "gold_storage",
+      "name": "Gold Storage",
+      "category": "RESOURCE",
+      "resourceType": "ELIXIR",
+      "maxLevel": 17,
+      "description": "Stores gold safely to fund building defense structures and village expansions.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 300, "timeSeconds": 60, "hitpoints": 400},
+        {"level": 10, "thRequired": 8, "cost": 250000, "timeSeconds": 86400, "hitpoints": 1650},
+        {"level": 12, "thRequired": 10, "cost": 1200000, "timeSeconds": 259200, "hitpoints": 2100},
+        {"level": 14, "thRequired": 12, "cost": 3500000, "timeSeconds": 432000, "hitpoints": 2600},
+        {"level": 15, "thRequired": 13, "cost": 5000000, "timeSeconds": 604800, "hitpoints": 2900},
+        {"level": 16, "thRequired": 14, "cost": 7000000, "timeSeconds": 691200, "hitpoints": 3200},
+        {"level": 17, "thRequired": 16, "cost": 9000000, "timeSeconds": 777600, "hitpoints": 3500}
+      ]
+    },
+    {
+      "id": "elixir_storage",
+      "name": "Elixir Storage",
+      "category": "RESOURCE",
+      "resourceType": "GOLD",
+      "maxLevel": 17,
+      "description": "Stores magic elixir to train armies, upgrade heroes, and research laboratory spells.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 300, "timeSeconds": 60, "hitpoints": 400},
+        {"level": 10, "thRequired": 8, "cost": 250000, "timeSeconds": 86400, "hitpoints": 1650},
+        {"level": 12, "thRequired": 10, "cost": 1200000, "timeSeconds": 259200, "hitpoints": 2100},
+        {"level": 14, "thRequired": 12, "cost": 3500000, "timeSeconds": 432000, "hitpoints": 2600},
+        {"level": 15, "thRequired": 13, "cost": 5000000, "timeSeconds": 604800, "hitpoints": 2900},
+        {"level": 16, "thRequired": 14, "cost": 7000000, "timeSeconds": 691200, "hitpoints": 3200},
+        {"level": 17, "thRequired": 16, "cost": 9000000, "timeSeconds": 777600, "hitpoints": 3500}
+      ]
+    },
+    {
+      "id": "dark_elixir_storage",
+      "name": "Dark Elixir Storage",
+      "category": "RESOURCE",
+      "resourceType": "ELIXIR",
+      "maxLevel": 11,
+      "description": "Safely stores the most precious and powerful substance in the realm.",
+      "levels": [
+        {"level": 1, "thRequired": 7, "cost": 250000, "timeSeconds": 21600, "hitpoints": 2000},
+        {"level": 4, "thRequired": 8, "cost": 1200000, "timeSeconds": 172800, "hitpoints": 2600},
+        {"level": 6, "thRequired": 10, "cost": 3000000, "timeSeconds": 345600, "hitpoints": 3200},
+        {"level": 8, "thRequired": 12, "cost": 6000000, "timeSeconds": 604800, "hitpoints": 3800},
+        {"level": 9, "thRequired": 13, "cost": 8500000, "timeSeconds": 691200, "hitpoints": 4200},
+        {"level": 10, "thRequired": 14, "cost": 11500000, "timeSeconds": 777600, "hitpoints": 4500},
+        {"level": 11, "thRequired": 16, "cost": 14000000, "timeSeconds": 864000, "hitpoints": 4800}
+      ]
+    },
+    {
+      "id": "gold_mine",
+      "name": "Gold Mine",
+      "category": "RESOURCE",
+      "resourceType": "ELIXIR",
+      "maxLevel": 16,
+      "description": "Extracts gold from deep underground veins passively for your village.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 150, "timeSeconds": 10, "hitpoints": 400},
+        {"level": 8, "thRequired": 4, "cost": 14000, "timeSeconds": 14400, "hitpoints": 640},
+        {"level": 12, "thRequired": 8, "cost": 168000, "timeSeconds": 86400, "hitpoints": 960},
+        {"level": 14, "thRequired": 10, "cost": 750000, "timeSeconds": 172800, "hitpoints": 1160},
+        {"level": 15, "thRequired": 12, "cost": 1500000, "timeSeconds": 259200, "hitpoints": 1280},
+        {"level": 16, "thRequired": 15, "cost": 3000000, "timeSeconds": 345600, "hitpoints": 1400}
+      ]
+    },
+    {
+      "id": "elixir_collector",
+      "name": "Elixir Collector",
+      "category": "RESOURCE",
+      "resourceType": "GOLD",
+      "maxLevel": 16,
+      "description": "Pumps raw elixir from subterranean leylines continuously.",
+      "levels": [
+        {"level": 1, "thRequired": 1, "cost": 150, "timeSeconds": 10, "hitpoints": 400},
+        {"level": 8, "thRequired": 4, "cost": 14000, "timeSeconds": 14400, "hitpoints": 640},
+        {"level": 12, "thRequired": 8, "cost": 168000, "timeSeconds": 86400, "hitpoints": 960},
+        {"level": 14, "thRequired": 10, "cost": 750000, "timeSeconds": 172800, "hitpoints": 1160},
+        {"level": 15, "thRequired": 12, "cost": 1500000, "timeSeconds": 259200, "hitpoints": 1280},
+        {"level": 16, "thRequired": 15, "cost": 3000000, "timeSeconds": 345600, "hitpoints": 1400}
+      ]
+    },
+    {
+      "id": "dark_elixir_drill",
+      "name": "Dark Elixir Drill",
+      "category": "RESOURCE",
+      "resourceType": "ELIXIR",
+      "maxLevel": 10,
+      "description": "Harnesses geothermal geysers to extract rare dark elixir droplets.",
+      "levels": [
+        {"level": 1, "thRequired": 7, "cost": 250000, "timeSeconds": 21600, "hitpoints": 400},
+        {"level": 3, "thRequired": 8, "cost": 800000, "timeSeconds": 86400, "hitpoints": 640},
+        {"level": 6, "thRequired": 9, "cost": 2000000, "timeSeconds": 259200, "hitpoints": 960},
+        {"level": 8, "thRequired": 11, "cost": 4500000, "timeSeconds": 432000, "hitpoints": 1200},
+        {"level": 9, "thRequired": 13, "cost": 7000000, "timeSeconds": 518400, "hitpoints": 1350},
+        {"level": 10, "thRequired": 15, "cost": 10000000, "timeSeconds": 604800, "hitpoints": 1500}
+      ]
+    }
+  ]
+}

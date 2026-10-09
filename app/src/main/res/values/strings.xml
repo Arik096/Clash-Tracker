@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Clash Tracker</string>
+    <string name="nav_upgrades">Upgrades</string>
+    <string name="nav_priority">Planner</string>
+    <string name="nav_loot_calculator">Loot Calc</string>
+    <string name="nav_catalog">Game Data</string>
+    <string name="nav_settings">Profile &amp; Sync</string>
+    <string name="channel_name">Clash Upgrade Alerts</string>
+    <string name="channel_description">Notifications when Clash of Clans builder upgrades and research finish</string>
+</resources>

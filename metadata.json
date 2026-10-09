@@ -1,0 +1,6 @@
+{
+  "name": "Clash Tracker",
+  "description": "Clash of Clans upgrade tracker with timer push notifications, builder scheduling, loot requirement calculator, and priority planner.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
