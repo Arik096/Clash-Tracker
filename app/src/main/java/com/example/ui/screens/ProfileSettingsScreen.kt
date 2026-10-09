@@ -1,7 +1,9 @@
 package com.example.ui.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,13 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,11 +48,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -59,6 +63,7 @@ import com.example.model.PlayerProfile
 import com.example.ui.theme.CocGold
 import com.example.ui.theme.CocGoldLight
 import com.example.viewmodel.CocViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileSettingsScreen(
@@ -66,6 +71,7 @@ fun ProfileSettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val profile by viewModel.playerProfile.collectAsState()
 
     var playerName by remember(profile) { mutableStateOf(profile.playerName) }
@@ -73,13 +79,12 @@ fun ProfileSettingsScreen(
     var townHall by remember(profile) { mutableIntStateOf(profile.townHallLevel) }
     var builders by remember(profile) { mutableIntStateOf(profile.totalBuilders) }
 
+    var importJsonText by remember { mutableStateOf("") }
+    var showImportSection by remember { mutableStateOf(false) }
+
     var avgGoldRaid by remember(profile) { mutableStateOf(profile.avgLootPerRaidGold.toString()) }
     var avgElixirRaid by remember(profile) { mutableStateOf(profile.avgLootPerRaidElixir.toString()) }
     var avgDarkRaid by remember(profile) { mutableStateOf(profile.avgLootPerRaidDark.toString()) }
-
-    var hourlyGold by remember(profile) { mutableStateOf(profile.hourlyCollectorGold.toString()) }
-    var hourlyElixir by remember(profile) { mutableStateOf(profile.hourlyCollectorElixir.toString()) }
-    var hourlyDark by remember(profile) { mutableStateOf(profile.hourlyCollectorDark.toString()) }
 
     var notifyFinish by remember(profile) { mutableStateOf(profile.notifyOnFinish) }
     var vibration by remember(profile) { mutableStateOf(profile.vibrationEnabled) }
@@ -91,6 +96,107 @@ fun ProfileSettingsScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Clash Ninja In-Game Data Import Card
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth().testTag("in_game_import_card"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(CocGold.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.CloudDownload, contentDescription = null, tint = CocGold, modifier = Modifier.size(20.dp))
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "IN-GAME DATA & API SYNC",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = 1.2.sp,
+                                        color = CocGoldLight
+                                    )
+                                )
+                                Text(
+                                    text = "Sync Village with Clash Ninja",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = { showImportSection = !showImportSection },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(if (showImportSection) "Hide" else "Import JSON", fontSize = 11.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Clash Ninja supports importing in-game village data and Supercell API export data so you don't have to manually click every building level.",
+                        style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    )
+
+                    AnimatedVisibility(visible = showImportSection) {
+                        Column(modifier = Modifier.padding(top = 10.dp)) {
+                            OutlinedTextField(
+                                value = importJsonText,
+                                onValueChange = { importJsonText = it },
+                                label = { Text("Paste Village Data JSON") },
+                                placeholder = { Text("{\n  \"townHallLevel\": 15,\n  \"buildings\": [...]\n}") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                                textStyle = MaterialTheme.typography.bodySmall.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = {
+                                    if (importJsonText.isNotBlank()) {
+                                        coroutineScope.launch {
+                                            val ok = viewModel.importJsonData(importJsonText)
+                                            if (ok) {
+                                                Toast.makeText(context, "Village data synced successfully!", Toast.LENGTH_SHORT).show()
+                                                importJsonText = ""
+                                                showImportSection = false
+                                            } else {
+                                                Toast.makeText(context, "Failed to parse JSON export", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = CocGold),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Sync In-Game Data", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Village Profile Card
         item {
             Card(
@@ -117,7 +223,7 @@ fun ProfileSettingsScreen(
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "VILLAGE IDENTITY & BUILDERS",
+                            text = "VILLAGE PROFILE & BUILDERS",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 letterSpacing = 1.2.sp,
@@ -165,7 +271,7 @@ fun ProfileSettingsScreen(
 
                     // Builder Count Slider
                     Text(
-                        text = "Total Village Builders: $builders ${if (builders == 6) "(Includes B.O.B)" else ""}",
+                        text = "Total Village Builders: $builders ${if (builders == 6) "(Includes B.O.B / 6th Builder)" else ""}",
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Slider(
@@ -245,7 +351,7 @@ fun ProfileSettingsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Vibration", fontWeight = FontWeight.Bold)
                             Text(
-                                "Vibrate phone when upgrade completes",
+                                "Vibrate phone when builder completes",
                                 style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
@@ -258,7 +364,6 @@ fun ProfileSettingsScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Test notification button
                     OutlinedButton(
                         onClick = {
                             viewModel.triggerTestNotification()
@@ -270,76 +375,6 @@ fun ProfileSettingsScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Send Test Push Notification")
                     }
-                }
-            }
-        }
-
-        // Farming & Production Rates
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("farming_rates_card"),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .background(CocGold.copy(alpha = 0.2f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.MilitaryTech, contentDescription = null, tint = CocGold, modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "AVERAGE LOOT PER RAID (CALCULATOR)",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.2.sp,
-                                color = CocGoldLight
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = avgGoldRaid,
-                            onValueChange = { avgGoldRaid = it },
-                            label = { Text("Gold / Raid") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                        OutlinedTextField(
-                            value = avgElixirRaid,
-                            onValueChange = { avgElixirRaid = it },
-                            label = { Text("Elixir / Raid") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f),
-                            singleLine = true
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = avgDarkRaid,
-                        onValueChange = { avgDarkRaid = it },
-                        label = { Text("Dark Elixir / Raid") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
                 }
             }
         }
@@ -360,7 +395,7 @@ fun ProfileSettingsScreen(
                         avgLootPerRaidDark = avgDarkRaid.toLongOrNull() ?: profile.avgLootPerRaidDark
                     )
                     viewModel.updateProfile(updated)
-                    Toast.makeText(context, "Village profile saved!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Settings saved!", Toast.LENGTH_SHORT).show()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = CocGold),
                 modifier = Modifier
@@ -368,7 +403,7 @@ fun ProfileSettingsScreen(
                     .testTag("save_profile_button")
             ) {
                 Text(
-                    text = "Save Profile Settings",
+                    text = "Save Profile & Sync",
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold
                 )

@@ -512,6 +512,7 @@ fun LootBalanceTile(
         ResourceType.GOLD -> CocGold
         ResourceType.ELIXIR -> CocElixir
         ResourceType.DARK_ELIXIR -> CocDarkElixir
+        ResourceType.ORE -> Color(0xFF64B5F6)
         ResourceType.GEMS -> Color(0xFF00E676)
     }
 

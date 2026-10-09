@@ -10,6 +10,8 @@ import com.example.model.PlayerProfile
 import com.example.model.PriorityItem
 import com.example.model.ResourceType
 import com.example.model.UpgradeTask
+import com.example.model.VillageProgressStats
+import com.example.model.VillageStructure
 import com.example.notification.NotificationHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+enum class StructureStatusFilter(val title: String) {
+    ALL("All Structures"),
+    NEEDS_UPGRADE("Needs Upgrade"),
+    UPGRADING("Upgrading Now"),
+    MAXED("Maxed for TH")
+}
 
 enum class PrioritySortOption(val title: String) {
     RANK("Priority Rank"),
@@ -37,7 +46,6 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
     val gameData = repository.gameData
     val playerProfile = repository.playerProfile
 
-    // 1-second ticker to update real-time remaining countdowns
     private val _currentTimeMillis = MutableStateFlow(System.currentTimeMillis())
     val currentTimeMillis: StateFlow<Long> = _currentTimeMillis.asStateFlow()
 
@@ -47,6 +55,48 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
         emptyList()
     )
 
+    val villageStructures = repository.villageStructures.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        emptyList()
+    )
+
+    val villageProgress: StateFlow<VillageProgressStats> = combine(
+        villageStructures,
+        playerProfile
+    ) { structures, profile ->
+        repository.calculateVillageProgress(structures, profile)
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        VillageProgressStats()
+    )
+
+    // Structure category & status filtering for Village Checklist
+    private val _selectedCategoryFilter = MutableStateFlow<BuildingCategory?>(null)
+    val selectedCategoryFilter = _selectedCategoryFilter.asStateFlow()
+
+    private val _selectedStatusFilter = MutableStateFlow(StructureStatusFilter.ALL)
+    val selectedStatusFilter = _selectedStatusFilter.asStateFlow()
+
+    val filteredStructures: StateFlow<List<VillageStructure>> = combine(
+        villageStructures,
+        _selectedCategoryFilter,
+        _selectedStatusFilter
+    ) { list, catFilter, statusFilter ->
+        var res = list
+        if (catFilter != null) {
+            res = res.filter { it.category == catFilter }
+        }
+        when (statusFilter) {
+            StructureStatusFilter.ALL -> res
+            StructureStatusFilter.NEEDS_UPGRADE -> res.filter { it.currentLevel < it.maxLevelForTH && !it.isUpgrading }
+            StructureStatusFilter.UPGRADING -> res.filter { it.isUpgrading }
+            StructureStatusFilter.MAXED -> res.filter { it.currentLevel >= it.maxLevelForTH }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Priority queue
     private val _prioritySort = MutableStateFlow(PrioritySortOption.COST_LOW_TO_HIGH)
     val prioritySort = _prioritySort.asStateFlow()
 
@@ -78,6 +128,17 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val targetPlanSummary: StateFlow<CocDataRepository.TargetPlanSummary> = combine(
+        repository.allPriorities,
+        playerProfile
+    ) { items, profile ->
+        repository.calculateTargetSummary(items, profile.totalBuilders)
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        repository.calculateTargetSummary(emptyList(), 6)
+    )
+
     val loginAdvice: StateFlow<CocDataRepository.LoginAdvice> = combine(
         activeUpgrades,
         _currentTimeMillis
@@ -87,17 +148,6 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         repository.calculateNextLoginAdvice(emptyList())
-    )
-
-    val targetPlanSummary: StateFlow<CocDataRepository.TargetPlanSummary> = combine(
-        repository.allPriorities,
-        playerProfile
-    ) { items, profile ->
-        repository.calculateTargetSummary(items, profile.totalBuilders)
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        repository.calculateTargetSummary(emptyList(), 5)
     )
 
     // For Loot Calculator screen
@@ -112,13 +162,20 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
             repository.initialize()
         }
 
-        // Ticker loop
         viewModelScope.launch {
             while (isActive) {
                 delay(1000)
                 _currentTimeMillis.value = System.currentTimeMillis()
             }
         }
+    }
+
+    fun setCategoryFilter(category: BuildingCategory?) {
+        _selectedCategoryFilter.value = category
+    }
+
+    fun setStatusFilter(filter: StructureStatusFilter) {
+        _selectedStatusFilter.value = filter
     }
 
     fun setPrioritySort(option: PrioritySortOption) {
@@ -129,8 +186,29 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
         _resourceFilter.value = type
     }
 
-    fun setCategoryFilter(cat: BuildingCategory?) {
-        _categoryFilter.value = cat
+    fun setGoldPassBoost(percent: Int) {
+        val updated = playerProfile.value.copy(goldPassBoostPercent = percent)
+        repository.saveProfile(updated)
+    }
+
+    fun setTownHallLevel(th: Int) {
+        val updated = playerProfile.value.copy(townHallLevel = th)
+        repository.saveProfile(updated)
+        viewModelScope.launch {
+            repository.seedVillageStructuresForTownHall(th, setPreviousThMax = false)
+        }
+    }
+
+    fun setAllToPreviousTownHallMax() {
+        viewModelScope.launch {
+            repository.setAllToPreviousTownHallMax(playerProfile.value.townHallLevel)
+        }
+    }
+
+    fun updateStructureLevel(id: String, newLevel: Int) {
+        viewModelScope.launch {
+            repository.updateStructureLevel(id, newLevel)
+        }
     }
 
     fun selectCalculatorBuilding(buildingId: String, targetLevel: Int) {
@@ -138,18 +216,61 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCalculatorTargetLevel.value = targetLevel
     }
 
-    fun startUpgrade(
+    fun startUpgradeFromStructure(structure: VillageStructure, builderIndex: Int) {
+        viewModelScope.launch {
+            val building = gameData.value.buildings.find { it.id == structure.buildingId } ?: return@launch
+            val nextLvl = (structure.currentLevel + 1).coerceAtMost(structure.maxLevelForTH)
+            val lvlInfo = building.getLevel(nextLvl)
+
+            val boost = playerProfile.value.goldPassBoostPercent
+            val mult = (100 - boost) / 100f
+
+            val origDuration = lvlInfo?.timeSeconds ?: 86400L
+            val durationSecs = (origDuration * mult).toLong()
+            val origCost = lvlInfo?.cost ?: 1_000_000L
+            val cost = (origCost * mult).toLong()
+
+            val now = System.currentTimeMillis()
+            val endMillis = now + (durationSecs * 1000L)
+
+            val task = UpgradeTask(
+                structureId = structure.id,
+                buildingId = building.id,
+                buildingName = structure.name,
+                category = structure.category,
+                fromLevel = structure.currentLevel,
+                toLevel = nextLvl,
+                resourceType = structure.resourceType,
+                originalCost = origCost,
+                cost = cost,
+                originalDurationSeconds = origDuration,
+                totalDurationSeconds = durationSecs,
+                startTimeMillis = now,
+                endTimeMillis = endMillis,
+                builderIndex = builderIndex,
+                note = "Clash Ninja Tracker Upgrade"
+            )
+
+            repository.startUpgrade(task)
+        }
+    }
+
+    fun startCustomUpgrade(
         building: BuildingInfo,
         fromLevel: Int,
         toLevel: Int,
-        builderIndex: Int,
-        customDurationSeconds: Long? = null,
-        note: String = ""
+        builderIndex: Int
     ) {
         viewModelScope.launch {
-            val levelInfo = building.getLevel(toLevel)
-            val durationSecs = customDurationSeconds ?: (levelInfo?.timeSeconds ?: 3600L)
-            val cost = levelInfo?.cost ?: 0L
+            val lvlInfo = building.getLevel(toLevel)
+            val boost = playerProfile.value.goldPassBoostPercent
+            val mult = (100 - boost) / 100f
+
+            val origDuration = lvlInfo?.timeSeconds ?: 86400L
+            val durationSecs = (origDuration * mult).toLong()
+            val origCost = lvlInfo?.cost ?: 1_000_000L
+            val cost = (origCost * mult).toLong()
+
             val now = System.currentTimeMillis()
             val endMillis = now + (durationSecs * 1000L)
 
@@ -160,13 +281,15 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
                 fromLevel = fromLevel,
                 toLevel = toLevel,
                 resourceType = building.resourceType,
+                originalCost = origCost,
                 cost = cost,
+                originalDurationSeconds = origDuration,
+                totalDurationSeconds = durationSecs,
                 startTimeMillis = now,
                 endTimeMillis = endMillis,
-                totalDurationSeconds = durationSecs,
-                builderIndex = builderIndex,
-                note = note
+                builderIndex = builderIndex
             )
+
             repository.startUpgrade(task)
         }
     }
@@ -197,6 +320,11 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         viewModelScope.launch {
             val levelInfo = building.getLevel(targetLevel)
+            val boost = playerProfile.value.goldPassBoostPercent
+            val mult = (100 - boost) / 100f
+            val cost = ((levelInfo?.cost ?: 1_000_000L) * mult).toLong()
+            val durationSecs = ((levelInfo?.timeSeconds ?: 86400L) * mult).toLong()
+
             val item = PriorityItem(
                 buildingId = building.id,
                 buildingName = building.name,
@@ -204,8 +332,8 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
                 currentLevel = currentLevel,
                 targetLevel = targetLevel,
                 resourceType = building.resourceType,
-                cost = levelInfo?.cost ?: 1_000_000L,
-                durationSeconds = levelInfo?.timeSeconds ?: 86400L,
+                cost = cost,
+                durationSeconds = durationSecs,
                 priorityRank = priorities.value.size + 1,
                 notes = notes
             )
@@ -228,15 +356,12 @@ class CocViewModel(application: Application) : AndroidViewModel(application) {
                     category = item.category,
                     resourceType = item.resourceType
                 )
-            startUpgrade(
+            startCustomUpgrade(
                 building = building,
                 fromLevel = item.currentLevel,
                 toLevel = item.targetLevel,
-                builderIndex = builderIndex,
-                customDurationSeconds = item.durationSeconds,
-                note = item.notes
+                builderIndex = builderIndex
             )
-            // Remove from priority queue once started
             repository.removePriorityItem(item.id)
         }
     }

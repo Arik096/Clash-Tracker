@@ -421,7 +421,7 @@ fun DataCatalogScreen(
             initialBuilderIndex = 1,
             onDismiss = { showUpgradeDialogForBuilding = null },
             onStartUpgrade = { selectedB, fromLvl, toLvl, bIdx ->
-                viewModel.startUpgrade(selectedB, fromLvl, toLvl, bIdx)
+                viewModel.startCustomUpgrade(selectedB, fromLvl, toLvl, bIdx)
                 showUpgradeDialogForBuilding = null
             }
         )

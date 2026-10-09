@@ -23,9 +23,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.DataObject
 import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.HourglassTop
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -57,17 +58,18 @@ import com.example.ui.screens.DataCatalogScreen
 import com.example.ui.screens.LootCalcScreen
 import com.example.ui.screens.PlannerScreen
 import com.example.ui.screens.ProfileSettingsScreen
+import com.example.ui.screens.StructuresChecklistScreen
 import com.example.ui.screens.UpgradesScreen
 import com.example.ui.theme.CocGold
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.CocViewModel
 
 enum class MainTab(val title: String, val icon: ImageVector, val testTag: String) {
-    UPGRADES("Upgrades", Icons.Default.HourglassTop, "nav_upgrades"),
+    VILLAGE("Village", Icons.Default.Home, "nav_village"),
+    CHECKLIST("Checklist", Icons.Default.ListAlt, "nav_checklist"),
     PLANNER("Planner", Icons.Default.FormatListNumbered, "nav_planner"),
     LOOT_CALC("Loot Calc", Icons.Default.Calculate, "nav_loot_calc"),
-    GAME_DATA("Game Data", Icons.Default.DataObject, "nav_game_data"),
-    SETTINGS("Settings", Icons.Default.Settings, "nav_settings")
+    SYNC("Sync & API", Icons.Default.Sync, "nav_sync")
 }
 
 class MainActivity : ComponentActivity() {
@@ -82,7 +84,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 val context = LocalContext.current
-                var currentTab by remember { mutableStateOf(MainTab.UPGRADES) }
+                var currentTab by remember { mutableStateOf(MainTab.VILLAGE) }
                 val playerProfile by viewModel.playerProfile.collectAsState()
 
                 // Permission launcher for POST_NOTIFICATIONS (Android 13+)
@@ -123,7 +125,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Clash Tracker",
+                                        text = "Clash Ninja Tracker",
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.ExtraBold,
                                             color = CocGold
@@ -178,7 +180,8 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     Box(modifier = Modifier.padding(innerPadding)) {
                         when (currentTab) {
-                            MainTab.UPGRADES -> UpgradesScreen(viewModel = viewModel)
+                            MainTab.VILLAGE -> UpgradesScreen(viewModel = viewModel)
+                            MainTab.CHECKLIST -> StructuresChecklistScreen(viewModel = viewModel)
                             MainTab.PLANNER -> PlannerScreen(
                                 viewModel = viewModel,
                                 onNavigateToLootCalc = { bId, lvl ->
@@ -187,8 +190,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             MainTab.LOOT_CALC -> LootCalcScreen(viewModel = viewModel)
-                            MainTab.GAME_DATA -> DataCatalogScreen(viewModel = viewModel)
-                            MainTab.SETTINGS -> ProfileSettingsScreen(viewModel = viewModel)
+                            MainTab.SYNC -> ProfileSettingsScreen(viewModel = viewModel)
                         }
                     }
                 }

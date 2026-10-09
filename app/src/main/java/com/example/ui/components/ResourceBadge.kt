@@ -7,12 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -86,6 +85,7 @@ fun getResourceColor(type: ResourceType): Color {
         ResourceType.GOLD -> CocGold
         ResourceType.ELIXIR -> CocElixir
         ResourceType.DARK_ELIXIR -> CocDarkElixir
+        ResourceType.ORE -> Color(0xFF64B5F6)
         ResourceType.GEMS -> CocGem
     }
 }
@@ -120,6 +120,12 @@ fun ResourceBadge(
             ResourceType.DARK_ELIXIR -> Icon(
                 imageVector = Icons.Default.WaterDrop,
                 contentDescription = "Dark Elixir",
+                tint = color,
+                modifier = Modifier.size(16.dp)
+            )
+            ResourceType.ORE -> Icon(
+                imageVector = Icons.Default.Shield,
+                contentDescription = "Ores",
                 tint = color,
                 modifier = Modifier.size(16.dp)
             )

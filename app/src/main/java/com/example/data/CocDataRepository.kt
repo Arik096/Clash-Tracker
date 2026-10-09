@@ -10,6 +10,8 @@ import com.example.model.PlayerProfile
 import com.example.model.PriorityItem
 import com.example.model.ResourceType
 import com.example.model.UpgradeTask
+import com.example.model.VillageProgressStats
+import com.example.model.VillageStructure
 import com.example.notification.NotificationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -21,12 +23,14 @@ import java.io.InputStreamReader
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class CocDataRepository(private val context: Context) {
 
     private val db = CocAppDatabase.getDatabase(context)
     private val upgradeDao = db.upgradeDao()
     private val priorityDao = db.priorityDao()
+    private val villageStructureDao = db.villageStructureDao()
     private val notificationHelper = NotificationHelper(context)
     private val prefs: SharedPreferences = context.getSharedPreferences("coc_player_prefs", Context.MODE_PRIVATE)
 
@@ -38,6 +42,7 @@ class CocDataRepository(private val context: Context) {
 
     val activeUpgrades: Flow<List<UpgradeTask>> = upgradeDao.getActiveUpgrades()
     val allPriorities: Flow<List<PriorityItem>> = priorityDao.getAllPriorities()
+    val villageStructures: Flow<List<VillageStructure>> = villageStructureDao.getAllStructures()
 
     suspend fun initialize() = withContext(Dispatchers.IO) {
         val savedCustomJson = prefs.getString("custom_game_data_json", null)
@@ -45,13 +50,18 @@ class CocDataRepository(private val context: Context) {
             try {
                 val parsed = parseGameDataJson(savedCustomJson)
                 _gameData.value = parsed
-                return@withContext
             } catch (_: Exception) {
-                // fallback to default assets
+                loadDefaultAssetGameData()
             }
+        } else {
+            loadDefaultAssetGameData()
         }
-        loadDefaultAssetGameData()
-        seedDefaultDataIfEmpty()
+
+        val hasInitStructures = prefs.getBoolean("has_initialized_village_v2", false)
+        if (!hasInitStructures) {
+            seedVillageStructuresForTownHall(_playerProfile.value.townHallLevel, setPreviousThMax = false)
+            prefs.edit().putBoolean("has_initialized_village_v2", true).apply()
+        }
     }
 
     suspend fun loadDefaultAssetGameData() = withContext(Dispatchers.IO) {
@@ -64,20 +74,6 @@ class CocDataRepository(private val context: Context) {
             prefs.edit().remove("custom_game_data_json").apply()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    suspend fun importGameDataJson(jsonContent: String): Boolean = withContext(Dispatchers.IO) {
-        try {
-            val parsed = parseGameDataJson(jsonContent)
-            if (parsed.buildings.isNotEmpty()) {
-                _gameData.value = parsed
-                prefs.edit().putString("custom_game_data_json", jsonContent).apply()
-                return@withContext true
-            }
-            false
-        } catch (e: Exception) {
-            false
         }
     }
 
@@ -133,147 +129,204 @@ class CocDataRepository(private val context: Context) {
         return GameDataWrapper(version, gameVersion, buildingsList)
     }
 
-    private suspend fun seedDefaultDataIfEmpty() {
-        // If no priority items exist, insert initial recommended targets
-        val currentPriorities = priorityDao.getAllPriorities()
-        // We can pre-seed realistic sample upgrades if database is completely fresh
-        val count = prefs.getInt("has_seeded_sample_v1", 0)
-        if (count == 0) {
-            val now = System.currentTimeMillis()
-            // Sample active upgrade 1: X-Bow Lv 6 to Lv 7 (14 hours remaining)
-            val upgrade1 = UpgradeTask(
-                buildingId = "x_bow",
-                buildingName = "X-Bow",
-                category = BuildingCategory.DEFENSE,
-                fromLevel = 6,
-                toLevel = 7,
-                resourceType = ResourceType.GOLD,
-                cost = 9_500_000L,
-                startTimeMillis = now - (36 * 3600 * 1000L),
-                endTimeMillis = now + (14 * 3600 * 1000L),
-                totalDurationSeconds = 50 * 3600L,
-                builderIndex = 1,
-                note = "Central base ground & air"
-            )
-            // Sample active upgrade 2: Clan Castle Lv 9 to 10 (2 hours 45 mins remaining)
-            val upgrade2 = UpgradeTask(
-                buildingId = "clan_castle",
-                buildingName = "Clan Castle",
-                category = BuildingCategory.ARMY,
-                fromLevel = 9,
-                toLevel = 10,
-                resourceType = ResourceType.ELIXIR,
-                cost = 14_000_000L,
-                startTimeMillis = now - (70 * 3600 * 1000L),
-                endTimeMillis = now + (2 * 3600 * 1000L + 45 * 60 * 1000L),
-                totalDurationSeconds = 72 * 3600L,
-                builderIndex = 2,
-                note = "Unlocks +5 troop space"
-            )
-            // Sample active upgrade 3: Archer Queen Lv 74 to 75 (1 day 8 hours remaining)
-            val upgrade3 = UpgradeTask(
-                buildingId = "archer_queen",
-                buildingName = "Archer Queen",
-                category = BuildingCategory.HERO,
-                fromLevel = 74,
-                toLevel = 75,
-                resourceType = ResourceType.DARK_ELIXIR,
-                cost = 190_000L,
-                startTimeMillis = now - (20 * 3600 * 1000L),
-                endTimeMillis = now + (32 * 3600 * 1000L),
-                totalDurationSeconds = 52 * 3600L,
-                builderIndex = 3,
-                note = "Royal Cloak upgrade milestone"
-            )
+    suspend fun seedVillageStructuresForTownHall(th: Int, setPreviousThMax: Boolean) = withContext(Dispatchers.IO) {
+        val buildings = _gameData.value.buildings
+        val structuresList = mutableListOf<VillageStructure>()
 
-            upgradeDao.insertUpgrade(upgrade1)
-            upgradeDao.insertUpgrade(upgrade2)
-            upgradeDao.insertUpgrade(upgrade3)
+        // Configuration of structure counts at high THs (Clash Ninja village layout)
+        val structureConfig = listOf(
+            Triple("cannon", 5, 20),
+            Triple("archer_tower", 6, 20),
+            Triple("eagle_artillery", 1, 6),
+            Triple("monolith", 1, 3),
+            Triple("scattershot", 2, 4),
+            Triple("spell_tower", 2, 3),
+            Triple("inferno_tower", 3, 9),
+            Triple("x_bow", 4, 10),
+            Triple("air_defense", 4, 13),
+            Triple("wizard_tower", 5, 15),
+            Triple("hidden_tesla", 5, 13),
+            Triple("barbarian_king", 1, 85),
+            Triple("archer_queen", 1, 85),
+            Triple("grand_warden", 1, 60),
+            Triple("royal_champion", 1, 35),
+            Triple("clan_castle", 1, 11),
+            Triple("army_camp", 4, 12),
+            Triple("laboratory", 1, 13),
+            Triple("pet_house", 1, 7),
+            Triple("blacksmith", 1, 7),
+            Triple("gold_storage", 4, 16),
+            Triple("elixir_storage", 4, 16),
+            Triple("dark_elixir_storage", 1, 10),
+            Triple("wall_batch", 1, 16)
+        )
 
-            notificationHelper.scheduleUpgradeNotification(upgrade1)
-            notificationHelper.scheduleUpgradeNotification(upgrade2)
-            notificationHelper.scheduleUpgradeNotification(upgrade3)
+        for ((bId, count, defaultMax) in structureConfig) {
+            val bInfo = buildings.find { it.id == bId } ?: continue
+            val maxForThisTh = bInfo.getMaxLevelForTh(th).coerceAtLeast(1)
 
-            // Seed priority queue
-            priorityDao.insertPriority(
-                PriorityItem(
-                    buildingId = "monolith",
-                    buildingName = "Monolith",
-                    category = BuildingCategory.DEFENSE,
-                    currentLevel = 1,
-                    targetLevel = 2,
-                    resourceType = ResourceType.DARK_ELIXIR,
-                    cost = 340_000L,
-                    durationSeconds = 1296000L,
-                    priorityRank = 1,
-                    notes = "Core defense priority against high-HP heroes"
-                )
-            )
-            priorityDao.insertPriority(
-                PriorityItem(
-                    buildingId = "scattershot",
-                    buildingName = "Scattershot",
-                    category = BuildingCategory.DEFENSE,
-                    currentLevel = 2,
-                    targetLevel = 3,
-                    resourceType = ResourceType.GOLD,
-                    cost = 17_000_000L,
-                    durationSeconds = 1123200L,
-                    priorityRank = 2,
-                    notes = "Splash defense against hybrid & root riders"
-                )
-            )
-            priorityDao.insertPriority(
-                PriorityItem(
-                    buildingId = "army_camp",
-                    buildingName = "Army Camp",
-                    category = BuildingCategory.ARMY,
-                    currentLevel = 11,
-                    targetLevel = 12,
-                    resourceType = ResourceType.ELIXIR,
-                    cost = 13_000_000L,
-                    durationSeconds = 950400L,
-                    priorityRank = 3,
-                    notes = "+5 army camp capacity"
-                )
-            )
-            priorityDao.insertPriority(
-                PriorityItem(
-                    buildingId = "eagle_artillery",
-                    buildingName = "Eagle Artillery",
-                    category = BuildingCategory.DEFENSE,
-                    currentLevel = 5,
-                    targetLevel = 6,
-                    resourceType = ResourceType.GOLD,
-                    cost = 20_500_000L,
-                    durationSeconds = 1296000L,
-                    priorityRank = 4,
-                    notes = "Heavy damage map-wide"
-                )
-            )
+            for (idx in 1..count) {
+                val currentLvl = if (setPreviousThMax) {
+                    val prevMax = bInfo.getMaxLevelForTh(th - 1)
+                    prevMax.coerceAtLeast(1)
+                } else {
+                    // Realistic mid-TH progression
+                    if (idx % 2 == 0) maxForThisTh else (maxForThisTh - 1).coerceAtLeast(1)
+                }
 
-            prefs.edit().putInt("has_seeded_sample_v1", 1).apply()
+                structuresList.add(
+                    VillageStructure(
+                        id = "${bId}_$idx",
+                        buildingId = bId,
+                        name = if (count > 1) "${bInfo.name} #$idx" else bInfo.name,
+                        category = bInfo.category,
+                        currentLevel = currentLvl,
+                        maxLevelForTH = maxForThisTh,
+                        absoluteMaxLevel = bInfo.maxLevel,
+                        structureIndex = idx,
+                        resourceType = bInfo.resourceType,
+                        isUpgrading = false
+                    )
+                )
+            }
         }
+
+        villageStructureDao.clearAll()
+        villageStructureDao.insertStructures(structuresList)
+    }
+
+    suspend fun updateStructureLevel(id: String, newLevel: Int) = withContext(Dispatchers.IO) {
+        villageStructureDao.updateLevel(id, newLevel)
+    }
+
+    suspend fun setAllToPreviousTownHallMax(th: Int) = withContext(Dispatchers.IO) {
+        seedVillageStructuresForTownHall(th, setPreviousThMax = true)
+    }
+
+    // Clash Ninja Village Progress Calculations
+    fun calculateVillageProgress(structures: List<VillageStructure>, profile: PlayerProfile): VillageProgressStats {
+        if (structures.isEmpty()) return VillageProgressStats()
+
+        val buildingsMap = _gameData.value.buildings.associateBy { it.id }
+        val boost = profile.goldPassBoostPercent // 0, 10, 15, 20%
+        val multiplier = (100 - boost) / 100f
+
+        var totalRequiredLevels = 0
+        var totalCompletedLevels = 0
+
+        var defReq = 0
+        var defDone = 0
+        var heroReq = 0
+        var heroDone = 0
+        var armyReq = 0
+        var armyDone = 0
+        var resReq = 0
+        var resDone = 0
+
+        var remainingTimeSecs = 0L
+        var remainingGold = 0L
+        var remainingElixir = 0L
+        var remainingDarkElixir = 0L
+        var maxedCount = 0
+        var remainingUpgrades = 0
+
+        for (s in structures) {
+            val maxLvl = s.maxLevelForTH
+            val curLvl = s.currentLevel.coerceAtMost(maxLvl)
+
+            totalRequiredLevels += maxLvl
+            totalCompletedLevels += curLvl
+
+            when (s.category) {
+                BuildingCategory.DEFENSE -> {
+                    defReq += maxLvl
+                    defDone += curLvl
+                }
+                BuildingCategory.HERO -> {
+                    heroReq += maxLvl
+                    heroDone += curLvl
+                }
+                BuildingCategory.ARMY -> {
+                    armyReq += maxLvl
+                    armyDone += curLvl
+                }
+                BuildingCategory.RESOURCE -> {
+                    resReq += maxLvl
+                    resDone += curLvl
+                }
+                else -> {}
+            }
+
+            if (curLvl >= maxLvl) {
+                maxedCount++
+            } else {
+                remainingUpgrades += (maxLvl - curLvl)
+                val bInfo = buildingsMap[s.buildingId]
+                if (bInfo != null) {
+                    for (lvl in (curLvl + 1)..maxLvl) {
+                        val lvlData = bInfo.getLevel(lvl)
+                        if (lvlData != null) {
+                            val discountedTime = (lvlData.timeSeconds * multiplier).toLong()
+                            val discountedCost = (lvlData.cost * multiplier).toLong()
+
+                            remainingTimeSecs += discountedTime
+                            when (s.resourceType) {
+                                ResourceType.GOLD -> remainingGold += discountedCost
+                                ResourceType.ELIXIR -> remainingElixir += discountedCost
+                                ResourceType.DARK_ELIXIR -> remainingDarkElixir += discountedCost
+                                else -> {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        val overall = if (totalRequiredLevels > 0) (totalCompletedLevels.toFloat() / totalRequiredLevels.toFloat()) * 100f else 100f
+        val defPercent = if (defReq > 0) (defDone.toFloat() / defReq.toFloat()) * 100f else 100f
+        val heroPercent = if (heroReq > 0) (heroDone.toFloat() / heroReq.toFloat()) * 100f else 100f
+        val armyPercent = if (armyReq > 0) (armyDone.toFloat() / armyReq.toFloat()) * 100f else 100f
+        val resPercent = if (resReq > 0) (resDone.toFloat() / resReq.toFloat()) * 100f else 100f
+
+        val totalBuilderDays = remainingTimeSecs.toFloat() / 86400f
+        val calendarDays = totalBuilderDays / profile.totalBuilders.coerceAtLeast(1).toFloat()
+
+        return VillageProgressStats(
+            overallPercent = overall,
+            defensesPercent = defPercent,
+            heroesPercent = heroPercent,
+            armyLabPercent = armyPercent,
+            resourcesPercent = resPercent,
+            totalStructuresCount = structures.size,
+            maxedStructuresCount = maxedCount,
+            remainingUpgradesCount = remainingUpgrades,
+            remainingBuilderDays = totalBuilderDays,
+            remainingCalendarDays = calendarDays,
+            remainingGold = remainingGold,
+            remainingElixir = remainingElixir,
+            remainingDarkElixir = remainingDarkElixir
+        )
     }
 
     private fun loadProfileFromPrefs(): PlayerProfile {
         return PlayerProfile(
             townHallLevel = prefs.getInt("town_hall_level", 14),
-            currentGold = prefs.getLong("current_gold", 6_200_000L),
-            currentElixir = prefs.getLong("current_elixir", 8_400_000L),
-            currentDarkElixir = prefs.getLong("current_dark_elixir", 165_000L),
-            maxGoldStorage = prefs.getLong("max_gold_storage", 18_000_000L),
-            maxElixirStorage = prefs.getLong("max_elixir_storage", 18_000_000L),
-            maxDarkElixirStorage = prefs.getLong("max_dark_storage", 340_000L),
-            totalBuilders = prefs.getInt("total_builders", 5),
-            avgLootPerRaidGold = prefs.getLong("avg_loot_gold", 650_000L),
-            avgLootPerRaidElixir = prefs.getLong("avg_loot_elixir", 600_000L),
-            avgLootPerRaidDark = prefs.getLong("avg_loot_dark", 6_000L),
-            hourlyCollectorGold = prefs.getLong("hourly_gold", 150_000L),
-            hourlyCollectorElixir = prefs.getLong("hourly_elixir", 150_000L),
-            hourlyCollectorDark = prefs.getLong("hourly_dark", 900L),
-            playerTag = prefs.getString("player_tag", "#2P98YCL8") ?: "#2P98YCL8",
-            playerName = prefs.getString("player_name", "Chief Warrior") ?: "Chief Warrior",
+            goldPassBoostPercent = prefs.getInt("gold_pass_boost", 20),
+            currentGold = prefs.getLong("current_gold", 8_500_000L),
+            currentElixir = prefs.getLong("current_elixir", 7_200_000L),
+            currentDarkElixir = prefs.getLong("current_dark_elixir", 180_000L),
+            maxGoldStorage = prefs.getLong("max_gold_storage", 20_000_000L),
+            maxElixirStorage = prefs.getLong("max_elixir_storage", 20_000_000L),
+            maxDarkElixirStorage = prefs.getLong("max_dark_storage", 350_000L),
+            totalBuilders = prefs.getInt("total_builders", 6),
+            avgLootPerRaidGold = prefs.getLong("avg_loot_gold", 750_000L),
+            avgLootPerRaidElixir = prefs.getLong("avg_loot_elixir", 700_000L),
+            avgLootPerRaidDark = prefs.getLong("avg_loot_dark", 6_500L),
+            hourlyCollectorGold = prefs.getLong("hourly_gold", 160_000L),
+            hourlyCollectorElixir = prefs.getLong("hourly_elixir", 160_000L),
+            hourlyCollectorDark = prefs.getLong("hourly_dark", 1_000L),
+            playerTag = prefs.getString("player_tag", "#8P2V8UQG") ?: "#8P2V8UQG",
+            playerName = prefs.getString("player_name", "Ninja Chief") ?: "Ninja Chief",
             notifyOnFinish = prefs.getBoolean("notify_finish", true),
             notifyBeforeFinishMinutes = prefs.getInt("notify_before", 15),
             vibrationEnabled = prefs.getBoolean("notify_vibrate", true)
@@ -284,6 +337,7 @@ class CocDataRepository(private val context: Context) {
         _playerProfile.value = profile
         prefs.edit()
             .putInt("town_hall_level", profile.townHallLevel)
+            .putInt("gold_pass_boost", profile.goldPassBoostPercent)
             .putLong("current_gold", profile.currentGold)
             .putLong("current_elixir", profile.currentElixir)
             .putLong("current_dark_elixir", profile.currentDarkElixir)
@@ -308,6 +362,9 @@ class CocDataRepository(private val context: Context) {
     // Upgrade management
     suspend fun startUpgrade(task: UpgradeTask) = withContext(Dispatchers.IO) {
         upgradeDao.insertUpgrade(task)
+        if (task.structureId.isNotEmpty()) {
+            villageStructureDao.setUpgrading(task.structureId, true, task.id)
+        }
         if (task.notificationScheduled) {
             notificationHelper.scheduleUpgradeNotification(task)
         }
@@ -318,6 +375,10 @@ class CocDataRepository(private val context: Context) {
         if (task != null) {
             notificationHelper.cancelUpgradeNotification(task)
             upgradeDao.markCompleted(taskId)
+            if (task.structureId.isNotEmpty()) {
+                villageStructureDao.updateLevel(task.structureId, task.toLevel)
+                villageStructureDao.setUpgrading(task.structureId, false, null)
+            }
         }
     }
 
@@ -326,6 +387,9 @@ class CocDataRepository(private val context: Context) {
         if (task != null) {
             notificationHelper.cancelUpgradeNotification(task)
             upgradeDao.deleteById(taskId)
+            if (task.structureId.isNotEmpty()) {
+                villageStructureDao.setUpgrading(task.structureId, false, null)
+            }
         }
     }
 
@@ -335,7 +399,6 @@ class CocDataRepository(private val context: Context) {
         val rem = task.endTimeMillis - now
         if (rem <= 0) return@withContext
 
-        // Boost accelerates time by saving (multiplier - 1) hours of work
         val savedMillis = (boostMultiplier - 1) * durationHours * 3600 * 1000L
         val newEndTime = if (rem <= savedMillis) now + 1000L else task.endTimeMillis - savedMillis
 
@@ -345,7 +408,7 @@ class CocDataRepository(private val context: Context) {
         notificationHelper.scheduleUpgradeNotification(updated)
     }
 
-    // Priority queue management
+    // Priority queue
     suspend fun addPriorityItem(item: PriorityItem) = withContext(Dispatchers.IO) {
         priorityDao.insertPriority(item)
     }
@@ -362,7 +425,7 @@ class CocDataRepository(private val context: Context) {
     data class LootShortageResult(
         val cost: Long,
         val currentLoot: Long,
-        val shortage: Long, // 0 if user has enough
+        val shortage: Long,
         val percentOwned: Float,
         val isReady: Boolean,
         val raidsNeeded: Int,
@@ -375,7 +438,7 @@ class CocDataRepository(private val context: Context) {
             ResourceType.GOLD -> profile.currentGold
             ResourceType.ELIXIR -> profile.currentElixir
             ResourceType.DARK_ELIXIR -> profile.currentDarkElixir
-            ResourceType.GEMS -> 0L
+            else -> 0L
         }
         val shortage = if (cost > current) cost - current else 0L
         val percent = if (cost > 0) (current.toFloat() / cost.toFloat()).coerceIn(0f, 1f) else 1f
@@ -385,14 +448,14 @@ class CocDataRepository(private val context: Context) {
             ResourceType.GOLD -> profile.avgLootPerRaidGold
             ResourceType.ELIXIR -> profile.avgLootPerRaidElixir
             ResourceType.DARK_ELIXIR -> profile.avgLootPerRaidDark
-            ResourceType.GEMS -> 1L
+            else -> 1L
         }.coerceAtLeast(1L)
 
         val hourlyPassive = when (resourceType) {
             ResourceType.GOLD -> profile.hourlyCollectorGold
             ResourceType.ELIXIR -> profile.hourlyCollectorElixir
             ResourceType.DARK_ELIXIR -> profile.hourlyCollectorDark
-            ResourceType.GEMS -> 1L
+            else -> 1L
         }.coerceAtLeast(1L)
 
         val raidsNeeded = if (shortage > 0) kotlin.math.ceil(shortage.toDouble() / avgRaid.toDouble()).toInt() else 0
@@ -428,9 +491,9 @@ class CocDataRepository(private val context: Context) {
                 recommendedTimeMillis = System.currentTimeMillis(),
                 formattedTime = "Now",
                 timeRemainingFormatted = "All builders are idle",
-                reason = "All your builders are currently free! Log into Clash of Clans now to assign them upgrades and keep progress moving.",
+                reason = "All builders are free! Log in to Clash of Clans to start upgrades and prevent idle builders.",
                 builderIndex = 1,
-                buildingName = "Village Builder",
+                buildingName = "Builder Hut",
                 targetLevel = 1,
                 hasActiveUpgrades = false
             )
@@ -488,7 +551,7 @@ class CocDataRepository(private val context: Context) {
                 ResourceType.GOLD -> gold += item.cost
                 ResourceType.ELIXIR -> elixir += item.cost
                 ResourceType.DARK_ELIXIR -> dark += item.cost
-                ResourceType.GEMS -> {}
+                else -> {}
             }
             totalSecs += item.durationSeconds
         }
@@ -511,5 +574,19 @@ class CocDataRepository(private val context: Context) {
             calendarDaysWithBuilders = calendarDays,
             estimatedCompletionDate = estimatedDate
         )
+    }
+
+    suspend fun importGameDataJson(jsonContent: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val parsed = parseGameDataJson(jsonContent)
+            if (parsed.buildings.isNotEmpty()) {
+                _gameData.value = parsed
+                prefs.edit().putString("custom_game_data_json", jsonContent).apply()
+                return@withContext true
+            }
+            false
+        } catch (e: Exception) {
+            false
+        }
     }
 }
